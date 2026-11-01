@@ -1,0 +1,11 @@
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+app/src/main/jniLibs/
+artifacts/
+
+.kotlin/
+
+.DS_Store

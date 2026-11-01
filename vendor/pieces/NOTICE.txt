@@ -1,0 +1,6 @@
+Cburnett chess pieces by Colin M. L. Burnett, GPL-2.0-or-later.
+Source: https://github.com/lichess-org/lila/tree/master/public/piece/cburnett
+License attribution: https://github.com/lichess-org/lila/blob/master/COPYING.md
+These SVGs are the preferred source form of the packaged 192×192 PNG assets.
+Rendered with rsvg-convert -w 192 -h 192 INPUT.svg -o OUTPUT.png.
+Distributed with this project under GPL-3.0-or-later.
