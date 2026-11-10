@@ -72,7 +72,7 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
                     DropdownMenuItem(text={ Text(if(showComments) "Hide comments" else "Show comments") },onClick={ showComments=!showComments; menu=false })
                     DropdownMenuItem(text={ Text("Larger text") },onClick={ fontSize=(fontSize+2).coerceAtMost(24); menu=false })
                     DropdownMenuItem(text={ Text("Smaller text") },onClick={ fontSize=(fontSize-2).coerceAtLeast(12); menu=false })
-                    DropdownMenuItem(text={ Text("Fold variations") },onClick={ collapsed=Notation.paragraphs(nodes).mapNotNull { it.branch }.toSet(); menu=false })
+                    DropdownMenuItem(text={ Text("Fold variations") },onClick={ collapsed=Notation.variationRoots(nodes); menu=false })
                     DropdownMenuItem(text={ Text("Unfold variations") },onClick={ collapsed=emptySet(); menu=false })
                 }
             }
@@ -84,9 +84,6 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
             items(rows.size,key={ rows[it].id }) { i ->
                 val row=rows[i]
                 Row(Modifier.fillMaxWidth().padding(start=(row.depth.coerceAtMost(4)*8).dp),verticalAlignment=Alignment.Top) {
-                    row.branch?.let { branch ->
-                        Text(if(row.folded) "⊞ " else "⊟ ",color=MaterialTheme.colorScheme.primary,modifier=Modifier.clickable { collapsed=if(branch in collapsed) collapsed-branch else collapsed+branch }.padding(vertical=2.dp).semantics { contentDescription=if(row.folded) "Expand variation" else "Collapse variation" })
-                    }
                     val normal=MaterialTheme.colorScheme.onSurface
                     val commentColor=MaterialTheme.colorScheme.tertiary
                     val highlight=MaterialTheme.colorScheme.primary
@@ -96,9 +93,9 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
                             val n=part.node
                             val active=n?.id==selected && !part.comment
                             val style=androidx.compose.ui.text.SpanStyle(color=if(active) onHighlight else if(part.comment) commentColor else normal,
-                                background=if(active) highlight else Color.Transparent,fontWeight=if(row.depth==0 && !part.comment) FontWeight.Bold else FontWeight.Normal)
+                                background=if(active) highlight else Color.Transparent,fontWeight=if(part.depth==0 && !part.comment) FontWeight.Bold else FontWeight.Normal)
                             pushStyle(style)
-                            if(n!=null) pushLink(androidx.compose.ui.text.LinkAnnotation.Clickable("${n.id}:${part.comment}:${part.before}",linkInteractionListener={ if(part.comment) onComment(n,part.before) else onSelect(n) }))
+                            if(n!=null) pushLink(androidx.compose.ui.text.LinkAnnotation.Clickable("${n.id}:${part.comment}:${part.before}",linkInteractionListener={ if(part.comment) onComment(n,part.before) else if(part.branch!=null && part.branch in collapsed) collapsed=collapsed-part.branch else onSelect(n) }))
                             append(part.text)
                             if(n!=null) pop()
                             pop()

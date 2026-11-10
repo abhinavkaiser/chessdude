@@ -33,11 +33,11 @@ class BoardPresentationTest {
         assertEquals(listOf("e4","d4","d5","Nf6","c4","Nf3","e5","Nf3","Bc4","Bc5","Nc6"),parts.map { it.node!!.san })
         assertEquals(game.nodes.size-1,parts.size)
         assertEquals(parts.size,parts.map { it.node!!.id }.distinct().size)
-        assertTrue(rows.any { it.depth==2 })
-        assertEquals(listOf("e4","e5","Nf3","Nc6"),rows.filter { it.depth==0 }.flatMap { it.parts }.mapNotNull { it.node?.san })
+        assertTrue(rows.size==1 && rows[0].parts.any { it.depth==2 })
+        assertEquals(listOf("e4","e5","Nf3","Nc6"),rows.flatMap { it.parts }.filter { it.depth==0 }.mapNotNull { it.node?.san })
         val branch=game.nodes.first { it.san=="d4" }
         val folded=Notation.paragraphs(game.nodes,setOf(branch.id))
-        assertTrue(folded.any { it.branch==branch.id && it.folded })
+        assertTrue(folded.flatMap { it.parts }.any { it.branch==branch.id && it.text.contains("…") })
         assertFalse(folded.flatMap { it.parts }.any { it.node?.san=="c4" })
         assertTrue(folded.flatMap { it.parts }.any { it.node?.san=="Nc6" })
     }
