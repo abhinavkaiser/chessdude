@@ -4,12 +4,12 @@ data class NotationPart(val text:String,val node:TreeNode?=null,val comment:Bool
 data class NotationParagraph(val id:String,val depth:Int,val parts:List<NotationPart>,val branch:String?=null,val folded:Boolean=false)
 object Notation {
     /** Emit variations beside the move they replace, then resume the enclosing continuation. */
-    fun paragraphs(nodes:List<TreeNode>,collapsed:Set<String> = emptySet()):List<NotationParagraph> {
+    fun paragraphs(nodes:List<TreeNode>,collapsed:Set<String> = emptySet(),showComments:Boolean = true):List<NotationParagraph> {
         val root=nodes.firstOrNull { it.parent==null } ?: return emptyList()
         val byId=nodes.associateBy { it.id }
         val children=nodes.filter { it.parent!=null }.groupBy { it.parent }.mapValues { (_,v) -> v.sortedBy { it.order } }
         val result=mutableListOf<NotationParagraph>()
-        if(root.comment.isNotBlank()) result.add(NotationParagraph("root",0,listOf(NotationPart(root.comment,root,true))))
+        if(showComments && root.comment.isNotBlank()) result.add(NotationParagraph("root",0,listOf(NotationPart(root.comment,root,true))))
         fun line(first:TreeNode,alternatives:List<TreeNode>,depth:Int) {
             var parts=mutableListOf<NotationPart>(); var count=0; var segment=0
             fun flush() { if(parts.isNotEmpty()) { result.add(NotationParagraph("${first.id}:${segment++}",depth,parts.toList(),if(depth>0 && segment==1) first.id else null)); parts=mutableListOf(); count=0 } }
@@ -22,14 +22,13 @@ object Notation {
             var next:TreeNode?=first; var alternativesHere=alternatives
             while(next!=null) {
                 val n=next
-                if(n.beforeComment.isNotBlank()) parts.add(NotationPart(n.beforeComment+" ",n,true,true))
+                if(showComments && n.beforeComment.isNotBlank()) parts.add(NotationPart(n.beforeComment+" ",n,true,true))
                 val before=byId[n.parent]?.fen?.split(' ')
                 val prefix=if(parts.none { it.node!=null && !it.comment } || before?.get(1)=="w") moveLabel(n,byId) else n.san
-                parts.add(NotationPart(prefix+glyphs(n.nags)+" ",n))
-                if(n.comment.isNotBlank()) parts.add(NotationPart(n.comment+" ",n,true))
+                parts.add(NotationPart(prefix.replace(' ','\u00A0')+glyphs(n.nags)+" ",n))
+                if(showComments && n.comment.isNotBlank()) parts.add(NotationPart(n.comment+" ",n,true))
                 count++
                 if(alternativesHere.isNotEmpty()) { flush(); alternativesHere.forEach { line(it,emptyList(),depth+1) } }
-                if(count>=8) flush()
                 val c=children[n.id].orEmpty(); next=c.firstOrNull(); alternativesHere=c.drop(1)
             }
             if(depth>0) parts.add(NotationPart(if(depth%2==1) "]" else ")"))

@@ -3,7 +3,7 @@
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/share_paths" />
         </provider>
-        <activity android:name=".MainActivity" android:exported="true" android:configChanges="" >
+        <activity android:name=".MainActivity" android:exported="true" android:configChanges="" android:launchMode="singleTask" android:taskAffinity="org.offlinechess.main" >
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
             <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="application/x-chess-pgn"/><data android:mimeType="text/plain"/></intent-filter>
             <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="content"/><data android:mimeType="application/x-chess-pgn"/><data android:mimeType="application/vnd.chess-pgn"/><data android:mimeType="chemical/x-pgn"/></intent-filter>

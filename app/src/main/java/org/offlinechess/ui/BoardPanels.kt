@@ -48,9 +48,10 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
     var collapsed by remember { mutableStateOf(setOf<String>()) }
     var fontSize by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(16) }
     var menu by remember { mutableStateOf(false) }
+    var showComments by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(true) }
     val byId=remember(nodes) { nodes.associateBy { it.id } }
     val root=nodes.firstOrNull { it.parent==null }
-    val rows=remember(nodes,collapsed) { Notation.paragraphs(nodes,collapsed) }
+    val rows=remember(nodes,collapsed,showComments) { Notation.paragraphs(nodes,collapsed,showComments) }
     val listState=rememberLazyListState()
     LaunchedEffect(selected) {
         val path=mutableSetOf<String>(); var n=byId[selected]
@@ -68,6 +69,7 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
             Box {
                 IconButton(onClick={ menu=true },modifier=Modifier.size(40.dp)) { Icon(androidx.compose.material.icons.Icons.Default.MoreVert,"Notation options") }
                 DropdownMenu(expanded=menu,onDismissRequest={ menu=false }) {
+                    DropdownMenuItem(text={ Text(if(showComments) "Hide comments" else "Show comments") },onClick={ showComments=!showComments; menu=false })
                     DropdownMenuItem(text={ Text("Larger text") },onClick={ fontSize=(fontSize+2).coerceAtMost(24); menu=false })
                     DropdownMenuItem(text={ Text("Smaller text") },onClick={ fontSize=(fontSize-2).coerceAtLeast(12); menu=false })
                     DropdownMenuItem(text={ Text("Fold variations") },onClick={ collapsed=Notation.paragraphs(nodes).mapNotNull { it.branch }.toSet(); menu=false })
