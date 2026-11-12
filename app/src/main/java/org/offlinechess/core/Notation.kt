@@ -3,6 +3,10 @@ package org.offlinechess.core
 data class NotationPart(val text:String,val node:TreeNode?=null,val comment:Boolean=false,val before:Boolean=false,val depth:Int=0,val branch:String?=null)
 data class NotationParagraph(val id:String,val depth:Int,val parts:List<NotationPart>,val branch:String?=null,val folded:Boolean=false)
 object Notation {
+    /** Display text of a comment: engine/clock command tags ([%clk ...], [%emt ...], [%cal ...]) are metadata, not commentary,
+     *  and several {} blocks on one move arrive joined by newlines - show them as one flowing line. */
+    fun cleanComment(raw:String):String = raw.replace(Regex("\\[%[^\\]]*]")," ").replace(Regex("\\s+")," ").trim()
+
     /** Emit variations beside the move they replace, then resume the enclosing continuation. */
     /** ChessBase style: one flowing paragraph. Variations sit inline in brackets, in normal weight;
      *  the mainline is bold. A variation is collapsed to "( 5.Nf3 … )" when its first move id is in [collapsed]. */
@@ -11,17 +15,17 @@ object Notation {
         val byId=nodes.associateBy { it.id }
         val children=nodes.filter { it.parent!=null }.groupBy { it.parent }.mapValues { (_,v) -> v.sortedBy { it.order } }
         val parts=mutableListOf<NotationPart>()
-        if(showComments && root.comment.isNotBlank()) parts.add(NotationPart(root.comment+" ",root,true))
+        if(showComments && cleanComment(root.comment).isNotBlank()) parts.add(NotationPart(cleanComment(root.comment)+" ",root,true))
         fun line(first:TreeNode,alternatives:List<TreeNode>,depth:Int) {
             var next:TreeNode?=first; var alternativesHere=alternatives; var needLabel=true
             while(next!=null) {
                 val n=next
-                if(showComments && n.beforeComment.isNotBlank()) { parts.add(NotationPart(n.beforeComment+" ",n,true,true,depth)); needLabel=true }
+                if(showComments && cleanComment(n.beforeComment).isNotBlank()) { parts.add(NotationPart(cleanComment(n.beforeComment)+" ",n,true,true,depth)); needLabel=true }
                 val whiteMoves=byId[n.parent]?.fen?.split(' ')?.getOrNull(1)=="w"
                 val label=if(needLabel || whiteMoves) moveLabel(n,byId) else n.san
                 parts.add(NotationPart(label.replace(' ','\u00A0')+glyphs(n.nags)+" ",n,false,false,depth))
                 needLabel=false
-                if(showComments && n.comment.isNotBlank()) { parts.add(NotationPart(n.comment+" ",n,true,false,depth)); needLabel=true }
+                if(showComments && cleanComment(n.comment).isNotBlank()) { parts.add(NotationPart(cleanComment(n.comment)+" ",n,true,false,depth)); needLabel=true }
                 for(alt in alternativesHere) {
                     val open=if(depth%2==0) "(" else "["
                     val close=if(depth%2==0) ") " else "] "

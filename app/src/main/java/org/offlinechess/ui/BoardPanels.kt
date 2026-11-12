@@ -79,6 +79,12 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
             TextButton(onClick={ root?.let(onSelect) },contentPadding=PaddingValues(horizontal=6.dp)) { Text("Start",style=MaterialTheme.typography.labelMedium) }
         }
         HorizontalDivider()
+        // The selected move's full comment, always readable on its own line (nothing hidden inside the move flow).
+        val shown=byId[selected]?.let { n -> listOf(n.beforeComment,n.comment).map { Notation.cleanComment(it) }.filter { it.isNotBlank() }.joinToString("  ·  ") }.orEmpty()
+        if(showComments && shown.isNotBlank()) {
+            Text(shown,color=MaterialTheme.colorScheme.tertiary,style=MaterialTheme.typography.bodyMedium,modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=6.dp).testTag("current-comment"))
+            HorizontalDivider()
+        }
         LazyColumn(state=listState,modifier=Modifier.fillMaxWidth().weight(1f).testTag("notation-lines"),contentPadding=PaddingValues(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)) {
             if(rows.isEmpty()) item { Text("Play a move to begin. Moves are saved automatically.",style=MaterialTheme.typography.bodySmall) }
             items(rows.size,key={ rows[it].id }) { i ->
