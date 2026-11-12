@@ -89,25 +89,34 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
             if(rows.isEmpty()) item { Text("Play a move to begin. Moves are saved automatically.",style=MaterialTheme.typography.bodySmall) }
             items(rows.size,key={ rows[it].id }) { i ->
                 val row=rows[i]
-                Row(Modifier.fillMaxWidth().padding(start=(row.depth.coerceAtMost(4)*8).dp),verticalAlignment=Alignment.Top) {
-                    val normal=MaterialTheme.colorScheme.onSurface
-                    val commentColor=MaterialTheme.colorScheme.tertiary
-                    val highlight=MaterialTheme.colorScheme.primary
-                    val onHighlight=MaterialTheme.colorScheme.onPrimary
+                val normal=MaterialTheme.colorScheme.onSurface
+                val dim=MaterialTheme.colorScheme.onSurfaceVariant
+                val commentColor=MaterialTheme.colorScheme.tertiary
+                val highlight=MaterialTheme.colorScheme.primary
+                val onHighlight=MaterialTheme.colorScheme.onPrimary
+                val only=row.parts.singleOrNull()
+                if(only!=null && only.comment) {
+                    // a comment: its own full-width line, italic and smaller, like ChessApp's {comment} rows
+                    val n=only.node
+                    Text(only.text,color=commentColor,fontSize=(fontSize-2).sp,fontStyle=androidx.compose.ui.text.font.FontStyle.Italic,lineHeight=(fontSize+4).sp,
+                        modifier=Modifier.fillMaxWidth().padding(start=(only.depth.coerceAtMost(4)*8).dp,top=1.dp,bottom=1.dp).clickable(enabled=n!=null) { if(n!=null) onComment(n,only.before) }.testTag("notation-comment-${row.id}"))
+                } else {
                     val text=androidx.compose.ui.text.buildAnnotatedString {
                         row.parts.forEach { part ->
                             val n=part.node
                             val active=n?.id==selected && !part.comment
-                            val style=androidx.compose.ui.text.SpanStyle(color=if(active) onHighlight else if(part.comment) commentColor else normal,
-                                background=if(active) highlight else Color.Transparent,fontWeight=if(part.depth==0 && !part.comment) FontWeight.Bold else FontWeight.Normal)
+                            val side=part.depth>0
+                            val style=androidx.compose.ui.text.SpanStyle(color=if(active) onHighlight else if(side) dim else normal,
+                                fontSize=if(side) (fontSize-2).sp else androidx.compose.ui.unit.TextUnit.Unspecified,
+                                background=if(active) highlight else Color.Transparent,fontWeight=if(part.depth==0) FontWeight.Bold else FontWeight.Normal)
                             pushStyle(style)
-                            if(n!=null) pushLink(androidx.compose.ui.text.LinkAnnotation.Clickable("${n.id}:${part.comment}:${part.before}",linkInteractionListener={ if(part.comment) onComment(n,part.before) else if(part.branch!=null && part.branch in collapsed) collapsed=collapsed-part.branch else onSelect(n) }))
+                            if(n!=null) pushLink(androidx.compose.ui.text.LinkAnnotation.Clickable("${n.id}:${part.comment}:${part.before}",linkInteractionListener={ if(part.branch!=null && part.branch in collapsed) collapsed=collapsed-part.branch else onSelect(n) }))
                             append(part.text)
                             if(n!=null) pop()
                             pop()
                         }
                     }
-                    Text(text,fontSize=fontSize.sp,lineHeight=(fontSize+7).sp,modifier=Modifier.weight(1f).testTag("notation-paragraph-${row.id}"))
+                    Text(text,fontSize=fontSize.sp,lineHeight=(fontSize+7).sp,modifier=Modifier.fillMaxWidth().testTag("notation-paragraph-${row.id}"))
                 }
             }
         }

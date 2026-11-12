@@ -17,7 +17,9 @@ class ChessBaseStyleTest {
         assertTrue("sideline must show", out.contains("(") && out.contains("d5"))
         assertTrue("real comment must show", out.contains("Solid start"))
         assertFalse("clock tags are metadata", out.contains("[%"))
-        assertFalse("no line breaks inside the notation", out.contains("\n"))
+        val rows=Notation.paragraphs(Pgn.parse(pgn).nodes)
+        assertTrue("each comment has its own row", rows.count { r -> r.parts.size==1 && r.parts[0].comment } >= 3)
+        assertTrue("sidelines stay inline in brackets, not on their own line", rows.any { r -> r.parts.any { it.text=="(" } && r.parts.any { it.node?.san=="Nf6" } })
     }
     @Test fun semicolonAndFirstMoveComments() {
         val pgn = "[Event \"x\"]\n[Result \"*\"]\n\n{Before move one} 1. e4 e5 ; line comment\n2. Nf3 (2. f4 {King's Gambit}) 2... Nc6 *"

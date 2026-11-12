@@ -14,26 +14,31 @@ object Notation {
         val root=nodes.firstOrNull { it.parent==null } ?: return emptyList()
         val byId=nodes.associateBy { it.id }
         val children=nodes.filter { it.parent!=null }.groupBy { it.parent }.mapValues { (_,v) -> v.sortedBy { it.order } }
-        val parts=mutableListOf<NotationPart>()
-        if(showComments && cleanComment(root.comment).isNotBlank()) parts.add(NotationPart(cleanComment(root.comment)+" ",root,true))
+        val result=mutableListOf<NotationParagraph>()
+        var parts=mutableListOf<NotationPart>(); var seq=0
+        // ChessApp way: moves and sidelines flow in one paragraph; every comment gets its own readable line {like this}.
+        fun flush() { if(parts.isNotEmpty()) { result.add(NotationParagraph("p${seq++}",0,parts.toList())); parts=mutableListOf() } }
+        fun comment(text:String,node:TreeNode,before:Boolean,depth:Int) {
+            val c=cleanComment(text); if(!showComments || c.isBlank()) return
+            flush(); result.add(NotationParagraph("c${seq++}",depth,listOf(NotationPart("{$c}",node,true,before,depth))))
+        }
+        comment(root.comment,root,false,0)
         fun line(first:TreeNode,alternatives:List<TreeNode>,depth:Int) {
             var next:TreeNode?=first; var alternativesHere=alternatives; var needLabel=true
             while(next!=null) {
                 val n=next
-                if(showComments && cleanComment(n.beforeComment).isNotBlank()) { parts.add(NotationPart(cleanComment(n.beforeComment)+" ",n,true,true,depth)); needLabel=true }
+                if(showComments && cleanComment(n.beforeComment).isNotBlank()) { comment(n.beforeComment,n,true,depth); needLabel=true }
                 val whiteMoves=byId[n.parent]?.fen?.split(' ')?.getOrNull(1)=="w"
                 val label=if(needLabel || whiteMoves) moveLabel(n,byId) else n.san
                 parts.add(NotationPart(label.replace(' ','\u00A0')+glyphs(n.nags)+" ",n,false,false,depth))
                 needLabel=false
-                if(showComments && cleanComment(n.comment).isNotBlank()) { parts.add(NotationPart(cleanComment(n.comment)+" ",n,true,false,depth)); needLabel=true }
+                if(showComments && cleanComment(n.comment).isNotBlank()) { comment(n.comment,n,false,depth); needLabel=true }
                 for(alt in alternativesHere) {
-                    val open=if(depth%2==0) "(" else "["
-                    val close=if(depth%2==0) ") " else "] "
                     if(alt.id in collapsed) {
-                        parts.add(NotationPart("$open\u00A0"+moveLabel(alt,byId).replace(' ','\u00A0')+"\u00A0…"+close,alt,false,false,depth+1,alt.id))
+                        parts.add(NotationPart("(\u00A0"+moveLabel(alt,byId).replace(' ','\u00A0')+"\u00A0…) ",alt,false,false,depth+1,alt.id))
                     } else {
-                        parts.add(NotationPart("$open",null,false,false,depth+1)); line(alt,emptyList(),depth+1)
-                        parts.add(NotationPart(close,null,false,false,depth+1)); 
+                        parts.add(NotationPart("(",null,false,false,depth+1)); line(alt,emptyList(),depth+1)
+                        parts.add(NotationPart(") ",null,false,false,depth+1))
                     }
                     needLabel=true
                 }
@@ -42,7 +47,8 @@ object Notation {
         }
         val first=children[root.id].orEmpty()
         first.firstOrNull()?.let { line(it,first.drop(1),0) }
-        return if(parts.isEmpty()) emptyList() else listOf(NotationParagraph("main",0,parts))
+        flush()
+        return result
     }
     /** Ids of every variation's first move, for fold/unfold. */
     fun variationRoots(nodes:List<TreeNode>):Set<String> {
