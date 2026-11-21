@@ -375,7 +375,7 @@ private val standardTags=listOf("White","Black","WhiteFideId","BlackFideId","Whi
         }
         Text("Winning chance = 100 / (1 + exp(−centipawns / 300)). Labels compare evaluations before and after a played move, with special handling for forced moves and lost forced mates. Accuracy is an estimate. No opening book is bundled, so no Book move label is assigned.",style=MaterialTheme.typography.bodySmall)
         SectionTitle("Licenses")
-        Text("Chess Dude is distributed under GPLv3 or later, with complete corresponding source. Stockfish © 2004–2026 its developers. Chesslib © Ben-Hur Langoni Junior (Apache 2.0). Cburnett pieces © Colin M. L. Burnett (GPLv2 or later).",style=MaterialTheme.typography.bodySmall)
+        Text("Chess Dude is distributed under GPLv3 or later. The complete corresponding source, including the build scripts and the network file, is at https://github.com/abhinavkaiser/chessdude and is free to copy, build and share under that licence. Stockfish © 2004–2026 its developers. Chesslib © Ben-Hur Langoni Junior (Apache 2.0). Cburnett pieces © Colin M. L. Burnett (GPLv2 or later).",style=MaterialTheme.typography.bodySmall)
         Action("Read license notices") { license=true }
         Spacer(Modifier.height(24.dp))
     }

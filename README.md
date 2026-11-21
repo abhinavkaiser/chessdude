@@ -100,6 +100,8 @@ This application stops analysis on backgrounding instead of running a foreground
 
 ## Licensing and source distribution
 
+**Source code:** https://github.com/abhinavkaiser/chessdude — the complete corresponding source of every released version (tags `v*`), including build scripts, vendored Stockfish and the NNUE network. The Google Play version is the same code; the Play price pays for the convenience of installing and updating it, not for the code, which anyone may build, modify and share under GPL-3.0-or-later.
+
 The application is distributed under **GPL-3.0-or-later**. The APK and complete corresponding source must travel together when redistributed; preserve Stockfish copyright notices, AUTHORS, COPYING and bundled network identity. Both static and dynamic integration can create GPL obligations; this project deliberately uses a GPL-compatible application distribution model rather than relying on the process boundary to avoid them. No proprietary distribution exception is claimed.
 
 See `LICENSE`, `app/src/main/assets/licenses`, `vendor/stockfish/Copying.txt`, `vendor/chesslib/LICENSE`, `vendor/pieces/NOTICE.txt` and `VENDOR_LOCK.txt`. Cburnett's GPL-2.0-or-later artwork is distributed here under GPLv3. Apache-licensed components retain notices and license texts.
