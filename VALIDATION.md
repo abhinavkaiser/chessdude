@@ -23,7 +23,7 @@ Design references: [ChessBase notation window](https://help.chessbase.com/cbase/
 
 ## APK verification
 
-- Package org.offlinechess; Chess Dude version 1.2.0 / code 3. Package and debug signing certificate retained for upgrades.
+- Package org.offlinechess; Chess Dude version 1.2.0 / code 3 (early builds). From 1.3.6 the Android application ID is in.xiox.chessdude for the Google Play release; the code package remains org.offlinechess.
 - artifacts/ChessDude-1.2.0-debug-arm64.apk: 162,090,622 bytes (154.6 MiB).
 - SHA-256: `482e0963d0c4d74da4edc23c6738a7affe054dd879653c55a83809f5d2eee74b`.
 - arm64-v8a; min SDK 28; target SDK 35. Debug signed; APK signature verification passed.

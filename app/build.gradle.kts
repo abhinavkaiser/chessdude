@@ -15,11 +15,11 @@ android {
     namespace = "org.offlinechess"
     compileSdk = 35
     defaultConfig {
-        applicationId = "org.offlinechess"
+        applicationId = "in.xiox.chessdude"
         minSdk = 28
         targetSdk = 35
-        versionCode = 9
-        versionName = "1.3.5"
+        versionCode = 10
+        versionName = "1.3.6"
         ndk { abiFilters += "arm64-v8a" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { arguments += mapOf("room.schemaLocation" to "$projectDir/schemas") } }
