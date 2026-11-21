@@ -1,8 +1,15 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.kotlin.kapt")
+}
+val keystoreProps = Properties().apply {
+    // signing secrets stay outside the repository: ~/.chessdude-signing/keystore.properties (or KEYSTORE_PROPERTIES)
+    val f = file(System.getenv("KEYSTORE_PROPERTIES") ?: (System.getProperty("user.home") + "/.chessdude-signing/keystore.properties"))
+    if (f.exists()) f.inputStream().use { load(it) }
 }
 android {
     namespace = "org.offlinechess"
@@ -11,11 +18,20 @@ android {
         applicationId = "org.offlinechess"
         minSdk = 28
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.3.4"
+        versionCode = 9
+        versionName = "1.3.5"
         ndk { abiFilters += "arm64-v8a" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { arguments += mapOf("room.schemaLocation" to "$projectDir/schemas") } }
+    }
+    signingConfigs {
+        if (keystoreProps.containsKey("storeFile")) create("release") {
+            storeFile = file(keystoreProps.getProperty("storeFile")); storePassword = keystoreProps.getProperty("storePassword")
+            keyAlias = keystoreProps.getProperty("keyAlias"); keyPassword = keystoreProps.getProperty("keyPassword")
+        }
+    }
+    buildTypes {
+        release { signingConfig = signingConfigs.findByName("release") }
     }
     androidResources { noCompress += "nnue" }
     buildFeatures { compose = true; buildConfig = true }

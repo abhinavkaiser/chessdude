@@ -9,3 +9,8 @@ artifacts/
 .kotlin/
 
 .DS_Store
+
+# signing secrets live outside the repo
+keystore.properties
+*.jks
+*.keystore
