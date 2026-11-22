@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -101,6 +103,11 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
                     Text(only.text,color=commentColor,fontSize=(fontSize-2).sp,fontStyle=androidx.compose.ui.text.font.FontStyle.Italic,lineHeight=(fontSize+4).sp,
                         modifier=Modifier.fillMaxWidth().padding(start=(only.depth.coerceAtMost(4)*8).dp,top=1.dp,bottom=1.dp).clickable(enabled=n!=null) { if(n!=null) onComment(n,only.before) }.testTag("notation-comment-${row.id}"))
                 } else {
+                    // Move taps are resolved from the tap position instead of one LinkAnnotation per move: a paragraph can hold dozens of moves and
+                    // Compose's accessibility layer crashes ("Can't have more than 32 custom actions for one widget") when a single Text has more than 32 links,
+                    // which happened for any long game with TalkBack, a password manager or another accessibility service switched on.
+                    val tapRanges=androidx.compose.runtime.remember(row.id) { mutableListOf<Triple<Int,Int,NotationPart>>() }
+                    tapRanges.clear()
                     val text=androidx.compose.ui.text.buildAnnotatedString {
                         row.parts.forEach { part ->
                             val n=part.node
@@ -110,13 +117,24 @@ fun NotationPanel(nodes:List<TreeNode>,selected:String,onSelect:(TreeNode)->Unit
                                 fontSize=if(side) (fontSize-2).sp else androidx.compose.ui.unit.TextUnit.Unspecified,
                                 background=if(active) highlight else Color.Transparent,fontWeight=if(part.depth==0) FontWeight.Bold else FontWeight.Normal)
                             pushStyle(style)
-                            if(n!=null) pushLink(androidx.compose.ui.text.LinkAnnotation.Clickable("${n.id}:${part.comment}:${part.before}",linkInteractionListener={ if(part.branch!=null && part.branch in collapsed) collapsed=collapsed-part.branch else onSelect(n) }))
+                            val start=length
                             append(part.text)
-                            if(n!=null) pop()
+                            if(n!=null) tapRanges.add(Triple(start,length,part))
                             pop()
                         }
                     }
-                    Text(text,fontSize=fontSize.sp,lineHeight=(fontSize+7).sp,modifier=Modifier.fillMaxWidth().testTag("notation-paragraph-${row.id}"))
+                    var layout by androidx.compose.runtime.remember(row.id) { mutableStateOf<androidx.compose.ui.text.TextLayoutResult?>(null) }
+                    Text(text,fontSize=fontSize.sp,lineHeight=(fontSize+7).sp,onTextLayout={ layout=it },
+                        modifier=Modifier.fillMaxWidth().pointerInput(text) {
+                            detectTapGestures { pos ->
+                                val l=layout ?: return@detectTapGestures
+                                val off=l.getOffsetForPosition(pos)
+                                tapRanges.firstOrNull { off>=it.first && off<it.second }?.let { (_,_,part) ->
+                                    val n=part.node
+                                    if(n!=null) { if(part.branch!=null && part.branch in collapsed) collapsed=collapsed-part.branch else onSelect(n) }
+                                }
+                            }
+                        }.testTag("notation-paragraph-${row.id}"))
                 }
             }
         }

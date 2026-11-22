@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -68,7 +69,8 @@ fun ChessBoard(node:TreeNode, flipped:Boolean,theme:String,best:String?,marking:
         if(from!=null && legal.any { it.from.ordinal==from && it.to.ordinal==i }) { attempt(from,i); selected=null }
         else selected=if(legal.any { it.from.ordinal==i }) i else null
     }
-    Canvas(Modifier.fillMaxWidth().aspectRatio(1f).semantics { contentDescription="Chessboard. ${if(board.sideToMove.toString()=="WHITE") "White" else "Black"} to move. FEN ${node.fen}"; customActions=legal.map { move -> CustomAccessibilityAction("Play ${legalLabels[move.toString()]}") { onMove(move.toString()); true } } }
+    Box(Modifier.fillMaxWidth()) {
+    Canvas(Modifier.fillMaxWidth().aspectRatio(1f).semantics { contentDescription="Chessboard. ${if(board.sideToMove.toString()=="WHITE") "White" else "Black"} to move. FEN ${node.fen}" }
         .pointerInput(node.id,flipped,marking,selected) { detectTapGestures(onTap={ p -> hit(p)?.let(::choose) },onLongPress={ p -> hit(p)?.let { i -> onMarks((node.comment+" [%csl G${name(i)}]").trim()) } }) }
         .pointerInput(node.id,flipped,marking) { detectDragGestures(onDragStart={ p -> dragFrom=hit(p); dragAt=p },onDrag={ change,delta -> change.consume(); dragAt+=delta },onDragEnd={ val from=dragFrom; val to=hit(dragAt); if(from!=null && to!=null) { if(marking) onMarks((node.comment+" [%cal G${name(from)}${name(to)}]").trim()) else attempt(from,to) }; dragFrom=null },onDragCancel={ dragFrom=null }) }
     ) {
@@ -107,6 +109,19 @@ fun ChessBoard(node:TreeNode, flipped:Boolean,theme:String,best:String?,marking:
             paint.color=android.graphics.Color.rgb(32,55,40)
             drawContext.canvas.nativeCanvas.drawText((if(flipped) 'h'-i else 'a'+i).toString(),i*cell+cell*.82f,size.height-cell*.05f,paint)
             drawContext.canvas.nativeCanvas.drawText((if(flipped) i+1 else 8-i).toString(),cell*.05f,i*cell+cell*.20f,paint)
+        }
+    }
+        // Accessibility: one node per piece that can move, each carrying only its own moves ("Play Nf3"). A piece never has more than 27, so every legal
+        // move stays available to TalkBack and other services without hitting Compose's limit of 32 custom actions on a single node. The nodes sit over
+        // their squares and take no touches, so dragging and tapping the board are unaffected.
+        val cellPx=canvasWidth/8; val cellDp=with(LocalDensity.current) { cellPx.toDp() }
+        if(cellPx>1f) legal.groupBy { it.from.ordinal }.forEach { (from,moves) ->
+            val symbol=board.getPiece(Square.squareAt(from)).fenSymbol.firstOrNull() ?: return@forEach
+            val kind=when(symbol.lowercaseChar()) { 'k' -> "king"; 'q' -> "queen"; 'r' -> "rook"; 'b' -> "bishop"; 'n' -> "knight"; else -> "pawn" }
+            val file=from%8; val rank=from/8
+            Box(Modifier.offset { IntOffset(((if(flipped) 7-file else file)*cellPx).roundToInt(),((if(flipped) rank else 7-rank)*cellPx).roundToInt()) }.size(cellDp)
+                .semantics { contentDescription="${if(symbol.isUpperCase()) "White" else "Black"} $kind on ${name(from)}, ${moves.size} legal ${if(moves.size==1) "move" else "moves"}"
+                    customActions=moves.map { move -> CustomAccessibilityAction("Play ${legalLabels[move.toString()]}") { onMove(move.toString()); true } } })
         }
     }
     if(promotion.isNotEmpty()) AlertDialog(onDismissRequest={ promotion=emptyList() },title={ Text("Promote pawn") },text={ Column { promotion.forEach { u -> TextButton(onClick={ onMove(u); promotion=emptyList() }) { Text(when(u.last()) { 'q' -> "Queen"; 'r' -> "Rook"; 'b' -> "Bishop"; else -> "Knight" }) } } } },confirmButton={})

@@ -18,8 +18,8 @@ android {
         applicationId = "in.xiox.chessdude"
         minSdk = 28
         targetSdk = 35
-        versionCode = 10
-        versionName = "1.3.6"
+        versionCode = 12
+        versionName = "1.3.8"
         ndk { abiFilters += "arm64-v8a" }
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions { annotationProcessorOptions { arguments += mapOf("room.schemaLocation" to "$projectDir/schemas") } }
